@@ -58,7 +58,13 @@ class ImageProperties:
         return (image.data.shape[0], image.data.shape[1])
     
     @staticmethod
-    def to_hsv(image: Image) -> None:
+    def hue(image: Image) -> float:
+        pass
+
+    def saturation(image: Image) -> float:
+        pass
+
+    def value(image: Image) -> float:
         pass
 
     @staticmethod

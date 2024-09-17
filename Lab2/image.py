@@ -43,11 +43,6 @@ class ImageProperties:
     @staticmethod
     def contrast(image: Image) -> float:
         return np.std(image.data)
-    
-    @staticmethod
-    def histogram(image: Image) -> None:
-        plt.hist(image.data.ravel(), bins=256, range=(0.0, 1.0), fc='k', ec='k')
-        plt.show()
 
     @staticmethod
     def range(image: Image) -> tuple:
@@ -58,14 +53,45 @@ class ImageProperties:
         return (image.data.shape[0], image.data.shape[1])
     
     @staticmethod
-    def hue(image: Image) -> float:
-        pass
+    def _rgbtohsv_onePixel(r,g,b) -> tuple:
+        r, g, b = r/255.0, g/255.0, b/255.0
+        mx = max(r, g, b)
+        mn = min(r, g, b)
+        df = mx-mn
 
-    def saturation(image: Image) -> float:
-        pass
+        v = mx
+        
+        s = 0
+        if mx != 0:
+            s = df/mx
 
-    def value(image: Image) -> float:
-        pass
+        h = 0
+        if df != 0:
+            if mx == r:
+                h = (g-b)/df
+            elif mx == g:
+                h = (b-r)/df + 2
+            else:
+                h = (r-g)/df + 4
+            h *= 60
+            if h < 0:
+                h += 360
+        return (h, s, v)
+    
+    @staticmethod
+    def h_s_v(image: Image) -> tuple:
+        h = np.zeros(image.data.shape)
+        s = np.zeros(image.data.shape)
+        v = np.zeros(image.data.shape)
+        for i in range(image.data.shape[0]):
+            for j in range(image.data.shape[1]):
+                h[i, j], s[i, j], v[i, j] = ImageProperties._rgbtohsv_onePixel(image.data[i, j, 0], image.data[i, j, 1], image.data[i, j, 2])
+        
+        avg_h = np.mean(h)
+        avg_s = np.mean(s)
+        avg_v = np.mean(v)
+
+        return (avg_h, avg_s, avg_v)
 
     @staticmethod
     def std_deviation(image: Image) -> float:
@@ -78,13 +104,15 @@ class ImageProperties:
 
     @staticmethod
     def summary(image: Image) -> dict:
+        h,s,v = ImageProperties.h_s_v(image)
         return {
-            'filename': image.filename if hasattr(image, 'filename') else None,
-            'image_tensor shape': image.data.shape,
             'brightness': ImageProperties.brightness(image),
             'contrast': ImageProperties.contrast(image),
-            'range': ImageProperties.range(image),
             'aspect_ratio': ImageProperties.aspect_ratio(image),
+            'range': ImageProperties.range(image),
+            'hue': h,
+            'saturation': s,
+            'value': v,
             'std_deviation': ImageProperties.std_deviation(image),
             'skewness': ImageProperties.skewness(image)
         }
@@ -104,6 +132,16 @@ class ImageProperties:
         else:
             hist, bins = np.histogram(image.data.ravel(), bins=256, range=range_)
             plt.plot(hist, color='white')
+
+        
+        #add summary to top right corner
+        summary = ImageProperties.summary(image)
+        summary_str = f"Brightness: {summary['brightness']}\nAspect Ratio: {summary['aspect_ratio']}\nRange: {summary['range']}\nHue: {summary['hue']}\nSaturation: {summary['saturation']}\nValue: {summary['value']}\nStd Deviation: {summary['std_deviation']}\nSkewness: {summary['skewness']}"
+        plt.text(0.5, 0.5, summary_str, horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes, bbox=dict(facecolor='white', alpha=0.5))
+
+        
+        plt.show()
+
 
     
 

@@ -115,9 +115,9 @@ class ImageFilters:
 
         img = Image()
         img.data = np.zeros(image.data.shape)
-        for i in range(1, image.data.shape[0] - 1):
-            for j in range(1, image.data.shape[1] - 1):
-                img.data[i, j] = np.sum(image.data[i-1:i+2, j-1:j+2] * kernel)
+        for i in range(0, image.data.shape[0] - kernel.shape[0] + 1):
+            for j in range(0, image.data.shape[1] - kernel.shape[1] + 1):
+                img.data[i, j] = np.sum(image.data[i:i+kernel.shape[0], j:j+kernel.shape[1]] * kernel)
         return img
     
     @staticmethod
